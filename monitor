@@ -2,7 +2,7 @@
 
 # TODO logging
 
-inotifywait -m ~/ -e create -e moved_to |
+inotifywait -m ~/sites-updates -e create -e moved_to |
     while read dir action file; do
         echo "The file '$file' appeared in directory '$dir' via '$action'"
 
@@ -23,9 +23,9 @@ inotifywait -m ~/ -e create -e moved_to |
             esac
 
             if [ dir != null ]; then # TODO transaction, all or nothing
-                echo y | sudo rm /var/www/"$dir/*"
+                echo y | sudo rm /var/www/"$dir"/*
 
-                sudo mv "$file" /var/www/"$dir"
+                sudo mv ~/sites-updates/"$file" /var/www/"$dir"
                 sudo tar -xf /var/www/"${dir}/$file"
 
                 echo yes | sudo rm /var/www/"${dir}/$file"
