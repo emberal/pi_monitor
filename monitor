@@ -2,33 +2,34 @@
 
 # TODO logging
 
-inotifywait -m ~/sites-updates -e create -e moved_to |
+inotifywait -m ~/sites-updates -e modify -e create -e moved_to |
     while read dir action file; do
         echo "The file '$file' appeared in directory '$dir' via '$action'"
 
         if [[ "$file" == *.tar.xz* ]]; then
 
-            dir=null
+            folder=null
 
             case "$file" in
             "martials_no")
-                dir=home
+                folder=home
                 ;;
             "api_martials_no")
-                dir=api
+                folder=api
                 ;;
             "nextcloud")
-                dir=nextcloud
+                folder=nextcloud
                 ;;
             esac
 
-            if [ dir != null ]; then # TODO transaction, all or nothing
-                echo y | sudo rm /var/www/"$dir"/*
+	    folder=test # TODO Remove
+            if [ "$folder" != null ]; then # TODO transaction, all or nothing
+                echo y | sudo rm /var/www/"$folder"/*
 
-                sudo mv ~/sites-updates/"$file" /var/www/"$dir"
-                sudo tar -xf /var/www/"${dir}/$file"
+                sudo mv "$dir"/"$file" /var/www/"$folder"
+                sudo tar -xf /var/www/"${folder}/$file"
 
-                echo yes | sudo rm /var/www/"${dir}/$file"
+                echo yes | sudo rm /var/www/"${folder}/$file"
             fi
 
         fi
