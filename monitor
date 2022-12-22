@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # TODO logging
 
@@ -11,10 +11,10 @@ inotifywait -m ~/sites-updates -e modify -e create -e moved_to |
             folder=null
 
             case "$file" in
-            "martials_no")
+            "martials.no")
                 folder=home
                 ;;
-            "api_martials_no")
+            "api")
                 folder=api
                 ;;
             "nextcloud")
@@ -22,14 +22,24 @@ inotifywait -m ~/sites-updates -e modify -e create -e moved_to |
                 ;;
             esac
 
-	    folder=test # TODO Remove
-            if [ "$folder" != null ]; then # TODO transaction, all or nothing
-                echo y | sudo rm /var/www/"$folder"/*
+            folder=test                    # TODO Remove
+            if [ "$folder" != null ]; then # TODO transaction, all or nothing, use backup
+                rootFolder=/var/www/"$folder"
 
-                sudo mv "$dir"/"$file" /var/www/"$folder"
-                sudo tar -xf /var/www/"${folder}/$file"
+                sudo cp "$rootFolder" "$rootFolder".bak # Backups folder
 
-                echo yes | sudo rm /var/www/"${folder}/$file"
+                if [ -e "$rootFolder".bak ]; then
+
+                    echo yes | sudo rm $rootFolder/* # Removes contents in folder
+
+                    sudo mv "$dir"/"$file" "$rootFolder" # Moves tar to correct folder
+                    sudo tar -xf "$rootFolder"/"$file"   # Extracts tar
+
+                    echo yes | sudo rm "$rootFolder"/"$file" # Deletes tar
+                fi
+
+            else
+                echo 'Folder not specified, could be wrong archive name' >&2
             fi
 
         fi
