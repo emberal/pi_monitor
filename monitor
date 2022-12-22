@@ -25,24 +25,24 @@ inotifywait -m ~/sites-updates -e create -e moved_to |
             if [ "$folder" != null ]; then # TODO transaction, all or nothing, use backup
                 rootFolder=/var/www/"$folder"
 
-		if [ ! -e "$rootFolder" ]; then
-		    sudo mkdir "$rootFolder"		
-	        else
-		    sudo cp -r "$rootFolder" "$rootFolder".bak # Backups folder
-		fi
+                if [ ! -e "$rootFolder" ]; then
+                    sudo mkdir "$rootFolder"
+                else
+                    sudo cp -r "$rootFolder" "$rootFolder".bak # Backups folder
+                fi
 
-		if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then
+                if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then # If backup exists or directory is empty
 
-		    if [ "$(ls -A $rootFolder)" ]; then
-                        echo yes | sudo rm -rf $rootFolder/* # Removes contents in folder
-		    fi
+                    if [ "$(ls -A $rootFolder)" ]; then      # If directory is not empty
+                        echo yes | sudo rm -rf $rootFolder/* # Removes contents in directory
+                    fi
 
-                    sudo mv "$dir"/"$file" "$rootFolder" # Moves tar to correct folder
-                    sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder"   # Extracts tar
+                    sudo mv "$dir"/"$file" "$rootFolder"                # Moves tarball to correct directory
+                    sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder" # Extracts tarball
 
-                    echo yes | sudo rm "$rootFolder"/"$file" # Deletes tar
+                    echo yes | sudo rm "$rootFolder"/"$file" # Deletes tarball
 
-		    echo "$rootFolder" updated
+                    echo "$rootFolder" updated
                 fi
 
             else
