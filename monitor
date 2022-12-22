@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 # TODO logging
 
-inotifywait -m ~/sites-updates -e modify -e create -e moved_to |
+inotifywait -m ~/sites-updates -e create -e moved_to |
     while read dir action file; do
         echo "The file '$file' appeared in directory '$dir' via '$action'"
 
@@ -11,31 +11,38 @@ inotifywait -m ~/sites-updates -e modify -e create -e moved_to |
             folder=null
 
             case "$file" in
-            "martials.no")
+            *"martials.no"*)
                 folder=home
                 ;;
-            "api")
+            *"api"*)
                 folder=api
                 ;;
-            "nextcloud")
+            *"nextcloud"*)
                 folder=nextcloud
                 ;;
             esac
 
-            folder=test                    # TODO Remove
             if [ "$folder" != null ]; then # TODO transaction, all or nothing, use backup
                 rootFolder=/var/www/"$folder"
 
-                sudo cp "$rootFolder" "$rootFolder".bak # Backups folder
+		if [ ! -e "$rootFolder" ]; then
+		    sudo mkdir "$rootFolder"		
+	        else
+		    sudo cp -r "$rootFolder" "$rootFolder".bak # Backups folder
+		fi
 
-                if [ -e "$rootFolder".bak ]; then
+		if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then
 
-                    echo yes | sudo rm $rootFolder/* # Removes contents in folder
+		    if [ "$(ls -A $rootFolder)" ]; then
+                        echo yes | sudo rm -rf $rootFolder/* # Removes contents in folder
+		    fi
 
                     sudo mv "$dir"/"$file" "$rootFolder" # Moves tar to correct folder
-                    sudo tar -xf "$rootFolder"/"$file"   # Extracts tar
+                    sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder"   # Extracts tar
 
                     echo yes | sudo rm "$rootFolder"/"$file" # Deletes tar
+
+		    echo "$rootFolder" updated
                 fi
 
             else
