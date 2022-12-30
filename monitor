@@ -2,53 +2,67 @@
 
 # TODO logging
 
-inotifywait -m ~/sites-updates -e create -e moved_to |
-    while read dir action file; do
-        echo "The file '$file' appeared in directory '$dir' via '$action'"
+handle_files() {
+    file="$1"
+    dir="$2"
 
-        if [[ "$file" == *.tar.xz* ]]; then
+    if [[ "$file" == *.tar.xz* ]]; then
 
-            folder=null
+        folder=null
 
-            case "$file" in
-            *"martials.no"*)
-                folder=home
-                ;;
-            *"api"*)
-                folder=api
-                ;;
-            *"nextcloud"*)
-                folder=nextcloud
-                ;;
-            esac
+        case "$file" in
+        *"martials.no"*)
+            folder=home
+            ;;
+        *"api"*)
+            folder=api
+            ;;
+        *"nextcloud"*)
+            folder=nextcloud
+            ;;
+        esac
 
-            if [ "$folder" != null ]; then # TODO transaction, all or nothing, use backup
-                rootFolder=/var/www/"$folder"
+        if [ "$folder" != null ]; then # TODO transaction, all or nothing, use backup
+            rootFolder=/var/www/"$folder"
 
-                if [ ! -e "$rootFolder" ]; then
-                    sudo mkdir "$rootFolder"
-                else
-                    sudo cp -r "$rootFolder" "$rootFolder".bak # Backups folder
-                fi
-
-                if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then # If backup exists or directory is empty
-
-                    if [ "$(ls -A $rootFolder)" ]; then      # If directory is not empty
-                        echo yes | sudo rm -rf $rootFolder/* # Removes contents in directory
-                    fi
-
-                    sudo mv "$dir"/"$file" "$rootFolder"                # Moves tarball to correct directory
-                    sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder" # Extracts tarball
-
-                    echo yes | sudo rm "$rootFolder"/"$file" # Deletes tarball
-
-                    echo "$rootFolder" updated
-                fi
-
+            if [ ! -e "$rootFolder" ]; then
+                sudo mkdir "$rootFolder"
             else
-                echo 'Folder not specified, could be wrong archive name' >&2
+                sudo cp -r "$rootFolder" "$rootFolder".bak # Backups folder
             fi
 
+            if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then # If backup exists or directory is empty
+
+                if [ "$(ls -A $rootFolder)" ]; then      # If directory is not empty
+                    echo yes | sudo rm -rf $rootFolder/* # Removes contents in directory
+                fi
+
+                sudo mv "$dir"/"$file" "$rootFolder"                # Moves tarball to correct directory
+                sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder" # Extracts tarball
+
+                echo yes | sudo rm "$rootFolder"/"$file" # Deletes tarball
+
+                echo "$rootFolder" updated
+            fi
+
+        else
+            echo 'Directory not specified, could be wrong archive name' >&2
         fi
 
+    fi
+}
+
+monitor_dir=~/sites-updates
+
+for file in "$monitor_dir"/*; do
+    if [ -f "$file" ]; then
+        echo "The file '$file' was found in directory '$monitor_dir'"
+        handle_files "$file" "$monitor_dir"
+    fi
+done
+
+inotifywait -m "$monitor_dir" -e create -e moved_to |
+    while read dir action file; do
+        echo "The file '$file' appeared in directory '$dir' via '$action'"
+        handle_files "$file" "$dir"
     done
