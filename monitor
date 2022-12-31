@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# TODO logging
-
 handle_files() {
     file="$1"
     dir="$2"
@@ -22,25 +20,35 @@ handle_files() {
             ;;
         esac
 
-        if [ "$folder" != null ]; then # TODO transaction, all or nothing, use backup
+        if [ "$folder" != null ]; then
             rootFolder=/var/www/"$folder"
 
             if [ ! -e "$rootFolder" ]; then
+                echo "$rootFolder" does not exist, creating...
                 sudo mkdir "$rootFolder"
-            else
+            else # TODO If transaction fails, restore backup
+                echo "$rootFolder" exists, backing up...
                 sudo cp -r "$rootFolder" "$rootFolder".bak # Backups folder
             fi
 
-            if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then # If backup exists or directory is empty
+            # If backup exists or directory is empty
+            if [ -e "$rootFolder".bak ] || [ ! "$(ls -A $rootFolder)" ]; then
 
-                if [ "$(ls -A $rootFolder)" ]; then      # If directory is not empty
-                    echo yes | sudo rm -rf $rootFolder/* # Removes contents in directory
+                # If directory is not empty
+                if [ "$(ls -A $rootFolder)" ]; then
+                    echo removing contents of "$rootFolder"
+                    echo yes | sudo rm -rf $rootFolder/*
                 fi
 
-                sudo mv "$dir"/"$file" "$rootFolder"                # Moves tarball to correct directory
-                sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder" # Extracts tarball
+                # Moves tarball to correct directory
+                echo moving "$file" to "$rootFolder"
+                sudo mv "$dir"/"$file" "$rootFolder"
 
-                echo yes | sudo rm "$rootFolder"/"$file" # Deletes tarball
+                echo extracting "$file" to "$rootFolder"
+                sudo tar -xf "$rootFolder"/"$file" -C "$rootFolder"
+
+                echo removing "$file"
+                echo yes | sudo rm "$rootFolder"/"$file"
 
                 echo "$rootFolder" updated
             fi
