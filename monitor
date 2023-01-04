@@ -64,7 +64,7 @@ handle_files() {
     fi
 }
 
-monitor_dir=~/sites-updates
+monitor_dir=/home/pi/sites-updates
 
 for file in "$monitor_dir"/*; do
     if [ -f "$file" ]; then
