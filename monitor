@@ -5,7 +5,7 @@ echo Starting monitor at $(date)
 echo //////////////////////////////////////////////
 
 handle_files() {
-    file="$1"
+    file="$(basename $1)"
     dir="$2"
 
     if [[ "$file" == *.tar.xz* ]]; then
