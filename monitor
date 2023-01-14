@@ -61,6 +61,12 @@ handle_files() {
             echo 'Directory not specified, could be wrong archive name' >&2
         fi
 
+    elif [[ "$file" == *.war* ]]; then
+        webapps=/opt/tomcat/webapps
+        echo moving "$file" to "$webapps"
+        sudo mv "$dir"/"$file" "$webapps"
+    else
+        echo 'File extention not recognized, ignoring'
     fi
 }
 
